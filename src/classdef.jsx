@@ -1704,14 +1704,24 @@ class MemberFunctionDefinition extends MemberDefinition implements Block {
 			var argExprs = formalArgs.map.<Expression>((arg) -> {
 				return new LocalExpression(arg.getName(), arg);
 			});
+			var defArgs = new LocalVariable[];
+			var defValues = new Expression[];
+			var statements = new Statement[];
 			for (var i = origArgIndex; i != this.getArguments().length; ++i) {
-				var defVal = this.getArguments()[i].getDefaultValue();
+				var arg = this.getArguments()[i];
+				var defVal = arg.getDefaultValue();
 				assert defVal != null;
-				argExprs.push(defVal.clone());
+				var boundArg = new LocalVariable(new Token(arg.getName().getValue()), arg.getType(), false);
+				defArgs.push(boundArg);
+				defValues.push(defVal.clone());
+				statements.push(new ExpressionStatement(
+					new AssignmentExpression(new Token("="),
+					new LocalExpression(boundArg.getName(), boundArg),
+					defValues[defValues.length - 1])));
+				argExprs.push(new LocalExpression(boundArg.getName(), boundArg));
 			}
-			var statement : Statement;
 			if (this.name() == "constructor") {
-				statement = new ConstructorInvocationStatement(new Token("this", false), createObjectType(this.getClassDef()), argExprs);
+				statements.push(new ConstructorInvocationStatement(new Token("this", false), createObjectType(this.getClassDef()), argExprs));
 			}
 			else {
 				var invocant = (this.flags() & ClassDefinition.IS_STATIC) == 0
@@ -1720,7 +1730,7 @@ class MemberFunctionDefinition extends MemberDefinition implements Block {
 
 				var methodRef = new PropertyExpression(new Token(".", false), invocant, this.getNameToken(), this.getArgumentTypes());
 				var callExpression = new CallExpression(new Token("(", false), methodRef, argExprs);
-				statement = new ReturnStatement(new Token("return", false), callExpression);
+				statements.push(new ReturnStatement(new Token("return", false), callExpression));
 			}
 			// build function
 			if (!(this instanceof TemplateFunctionDefinition)) {
@@ -1730,8 +1740,8 @@ class MemberFunctionDefinition extends MemberDefinition implements Block {
 					this.flags() | ClassDefinition.IS_INLINE | ClassDefinition.IS_GENERATED,
 					this.getReturnType(),
 					formalArgs,
-					new LocalVariable[],
-					[statement],
+					defArgs,
+					statements,
 					this.getClosures().slice(0),
 					this._lastTokenOfBody,
 					this._docComment);
@@ -1752,7 +1762,7 @@ class MemberFunctionDefinition extends MemberDefinition implements Block {
 					return true;
 				}
 				return expr.forEachExpression(onExpr);;
-			}, argExprs);
+			}, defValues);
 		}
 	}
 
