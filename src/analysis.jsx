@@ -324,8 +324,13 @@ class ArgumentDeclaration extends LocalVariable {
 		this._defaultValue = defaultValue;
 	}
 
+	function constructor (name : Token, type : Type, isConst : boolean, defaultValue : Expression) {
+		super(name, type, isConst);
+		this._defaultValue = defaultValue;
+	}
+
 	function clone () : ArgumentDeclaration {
-		return new ArgumentDeclaration(this._name, this._type, Util.cloneNullable(this._defaultValue));
+		return new ArgumentDeclaration(this._name, this._type, this._isConstant, Util.cloneNullable(this._defaultValue));
 	}
 
 	function getDefaultValue() : Expression {
@@ -334,7 +339,7 @@ class ArgumentDeclaration extends LocalVariable {
 
 	override function _instantiate (instantiationContext : InstantiationContext) : ArgumentDeclaration {
 		var type = this._type != null ? this._type.instantiate(instantiationContext, false) : null;
-		return new ArgumentDeclaration(this._name, type, this._defaultValue);
+		return new ArgumentDeclaration(this._name, type, this._isConstant, this._defaultValue);
 	}
 
 	override function instantiateAndPush (instantiationContext : InstantiationContext) : ArgumentDeclaration {

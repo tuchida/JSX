@@ -3409,6 +3409,7 @@ class Parser {
 
 	function _functionArgumentsExpr (allowVarArgs : boolean, requireTypeDeclaration : boolean, allowDefaultValues : boolean) : ArgumentDeclaration[] {
 		var args = new ArgumentDeclaration[];
+		var hasDefaultValue = false;
 		if (this._expectOpt(")") == null) {
 			var token = null : Token;
 			do {
@@ -3438,7 +3439,7 @@ class Parser {
 					// vararg is the last argument
 					if (argType == null && isVarArg)
 						throw new Error("not yet implemented!");
-					args.push(new ArgumentDeclaration(argName, new VariableLengthArgumentType(argType)));
+					args.push(new ArgumentDeclaration(argName, new VariableLengthArgumentType(argType), hasDefaultValue, null));
 					if (this._expect(")") == null)
 						return null;
 					break;
@@ -3447,6 +3448,12 @@ class Parser {
 				var assignToken = this._expectOpt("=");
 				if (assignToken != null)  {
 					var state = this._preserveState();
+					if (!hasDefaultValue) {
+						args = args.map.<ArgumentDeclaration>((arg) -> {
+							return new ArgumentDeclaration(arg.getName(), arg.getType(), true, arg.getDefaultValue());
+						});
+						hasDefaultValue = true;
+					}
 					this._pushScope(null, args);
 					try {
 						if ((defaultValue = this._assignExpr(true)) == null) {
@@ -3469,7 +3476,7 @@ class Parser {
 						return null;
 					}
 				}
-				args.push(new ArgumentDeclaration(argName, argType, defaultValue));
+				args.push(new ArgumentDeclaration(argName, argType, hasDefaultValue, defaultValue));
 				token = this._expect([ ")", "," ]);
 				if (token == null)
 					return null;
