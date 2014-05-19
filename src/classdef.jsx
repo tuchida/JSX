@@ -1698,7 +1698,7 @@ class MemberFunctionDefinition extends MemberDefinition implements Block {
 		for (; origArgIndex != this.getArguments().length; ++origArgIndex) {
 			// build list of formal args (of the generated function)
 			var formalArgs = this.getArguments().slice(0, origArgIndex).map.<ArgumentDeclaration>((arg) -> {
-				return new ArgumentDeclaration(arg.getName(), arg.getType());
+				return new ArgumentDeclaration(arg.getName(), arg.getType(), true, null);
 			});
 			// build function body
 			var argExprs = formalArgs.map.<Expression>((arg) -> {

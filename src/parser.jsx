@@ -3447,7 +3447,7 @@ class Parser {
 				var assignToken = this._expectOpt("=");
 				if (assignToken != null)  {
 					var state = this._preserveState();
-					this._pushScope(null, args);
+					this._pushScope(null, args.map(arg => new ArgumentDeclaration(arg.getName(), arg.getType(), true, arg.getDefaultValue())));
 					try {
 						if ((defaultValue = this._assignExpr(true)) == null) {
 							return null;
